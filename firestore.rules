@@ -1,0 +1,40 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      function isAuth() {
+        return (request.auth != null);
+      }
+
+      function selfData() {
+        return (resource.data.author == request.auth.uid);
+      }
+
+      function validAuthor() {
+        return (request.resource.data.author == request.auth.uid);
+      }
+      
+      function validCreatedAt() {
+        return (request.resource.data.createdAt == request.time);
+      }
+
+      function validUpdatedAt() {
+        return (request.resource.data.updatedAt == request.time);
+      }
+
+      function validReq() {
+        return (
+          request.resource.data.title is string &&
+          request.resource.data.title != "" &&
+          request.resource.data.content is string
+        );
+      }
+
+      allow list: if (isAuth() && selfData());
+      allow create: if (isAuth() && validAuthor() && validCreatedAt() && validUpdatedAt() && validReq());
+      allow update: if (isAuth() && selfData() && validUpdatedAt() && validReq());
+      allow delete: if (isAuth() && selfData());
+    }
+  }
+}
